@@ -1,2 +1,6 @@
+import { Canvas } from './canvas.js'
 
-console.log('Hello world!')
+const socket = io()
+const canvas = new Canvas()
+
+socket.on('')

@@ -1,13 +1,18 @@
 const express = require('express')
 const http = require('http')
-const io = require('socket.io')
+const socketio = require('socket.io')
 
 const app = express()
 const server = http.createServer(app)
-//const socket = io(server)
+const io = socketio(server)
 
 app.set('view engine', 'hbs')
 app.use(express.static('public'))
+
+
+io.on('connection', () => {
+    console.log('New socket connection')
+})
 
 
 app.get('/', (req, res) => {
@@ -19,6 +24,6 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 3000
 
-server.listen(PORT, 'localhost', () => {
+server.listen(PORT, () => {
     console.log('Server is up and running!')
 })

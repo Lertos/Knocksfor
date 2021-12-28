@@ -6,19 +6,28 @@ const app = express()
 const server = http.createServer(app)
 const io = socketio(server)
 
+const Map = require('./server/map.js')
+let gameMap = new Map(32, 32)
+
+let mapData = gameMap.getMapData()
+let map = gameMap.getMap()
+
+//console.log(mapData)
+
 app.set('view engine', 'hbs')
 app.use(express.static('public'))
 
 
-io.on('connection', () => {
+io.on('connection', (socket) => {
     console.log('New socket connection')
+
+    socket.emit('sendMapData', { mapData: mapData, map: map })
 })
 
 
 app.get('/', (req, res) => {
     res.render('index', {
-        title: 'Some Title',
-        name: 'Dylan'
+        title: 'Some Title'
     })
 })
 

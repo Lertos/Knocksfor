@@ -1,6 +1,10 @@
 import { Canvas } from './canvas.js'
 
 const socket = io()
-const canvas = new Canvas()
 
-//socket.on('')
+socket.on('sendMapData', (data) => {
+    let mapData = data.mapData
+    let map = data.map
+    
+    const canvas = new Canvas(mapData, map)
+})

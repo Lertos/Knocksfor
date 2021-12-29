@@ -18,6 +18,30 @@ app.set('view engine', 'hbs')
 app.use(express.static('public'))
 
 
+//TESTING
+//TESTING
+//TESTING
+let test = {
+    txt: 'heyu',
+    fun: () => {
+        testingFun()
+    }
+    
+}
+
+let testingFun = () => {
+    console.log('heyu2')
+}
+
+console.log(test.txt)
+test.fun()
+//TESTING
+//TESTING
+//TESTING
+
+
+
+
 io.on('connection', (socket) => {
     console.log('New socket connection')
 

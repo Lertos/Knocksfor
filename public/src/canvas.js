@@ -1,35 +1,28 @@
 
+//TODO - add color enums
+
+//TODO - add states such as "map", "city, "popup" - perhaps try buttons to change the state
+
+
 export class Canvas {
 
     tileSize = 32
 
     backgroundColor = '#0f0530'
 
-
     images = []
-
-    //TODO - make a class for a popup window and replace these with one single popup
-    //and simply have these as getters for down below
-    popupFGColor = '#3b2e04'
-    popupBorderColor = '#806511'
-    popupWindow = null
-    selectedTile = null
-
+    //TODO - Make logic to have elements added in proper order and then
+    //call all their draw methods
+    elementsToDraw = []
+    
     constructor(mapData, map) {
         this.mapData = mapData
         this.map = map
-
-        let canvas = document.createElement('canvas')
-        document.body.appendChild(canvas)
-
         
-        canvas.width = window.innerWidth
-        canvas.height = window.innerHeight
-        
-        this.context = canvas.getContext('2d')
-        
-        this.canvas = canvas
+        this.createCanvas()
         this.canvas.addEventListener('mousedown', (e) => { this.getCursorPosition(e) })
+
+        this.popup = new Popup(120, 180, 3, 4, '#4a4343', '#383131', '#ffffff')
         
         window.onresize = () => { this.resize() }
 
@@ -37,8 +30,18 @@ export class Canvas {
         this.draw()
     }
 
+    createCanvas() {
+        let canvas = document.createElement('canvas')
+        document.body.appendChild(canvas)
+        
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
+
+        this.context = canvas.getContext('2d')
+        this.canvas = canvas
+    }
+
     loadImages() {
-        //Loading images from the map data
         for (let i = 0; i < this.mapData.length; i++){
             let img = new Image()
 
@@ -60,16 +63,7 @@ export class Canvas {
             }
         }
 
-        if (this.popupWindow != null && this.popupWindow != undefined) {
-            const x = this.popupWindow.x
-            const y = this.popupWindow.y
-
-            this.rect(x, y, 135, 195, this.popupBorderColor)
-            this.rect(x + 5, y + 5, 125, 185, this.popupFGColor)
-            this.context.font = "20px Arial";
-            this.context.fillStyle = "white";
-            this.context.fillText(this.selectedTile.display, x + 20, y + 44);
-        }
+        this.popup.draw(this.context)
 
         window.requestAnimationFrame(() => this.draw())
     }
@@ -107,11 +101,93 @@ export class Canvas {
         //If so - perhaps have a popup class that would check where the click was on the
         //  popup and proceed accordingly
         //If not - then you can assume it was on the map and show the info requested
+        if (this.popup.x != null) {
+            const insideX = x >= this.popup.x && x <= this.popup.x + this.popup.width
+            const insideY = y >= this.popup.y && y <= this.popup.y + this.popup.height
+            
+            if (insideX && insideY)
+                console.log('Inside border')
+        }
 
-        console.log("x: " + tileX + " y: " + tileY)
-        console.log(this.map[tileX][tileY])
-        this.popupWindow = { x: x, y: y }
-        this.selectedTile = this.map[tileX][tileY]
+        this.popup.setX(x)
+        this.popup.setY(y)
+        this.popup.setTile(this.map[tileX][tileY])
     }
+
+}
+
+class Popup {
+
+    x = null
+    y = null
+    tile = null
+    //TODO - dont need class for buttons, but could make objects that hold top, left, width, height,
+    //then also text, color, bgcolor (border), width, then the func to run
+    buttons = []
+
+    constructor(width, height, borderWidth, padding, borderColor, mainColor, textColor) {
+        this.width = width
+        this.height = height
+
+        this.borderWidth = borderWidth
+        this.padding = padding
+        
+        this.borderColor = borderColor
+        this.mainColor = mainColor
+        this.textColor = textColor
+
+        this.font = '20px Arial'
+        this.fontSize = 20
+    }
+
+    setFont(size, font) {
+        this.font = size + 'px ' + font
+        this.fontSize = size
+    }
+
+    setX(x) {
+        this.x = x
+    }
+
+    setY(y) {
+        this.y = y
+    }
+
+    setTile(tile) {
+        this.tile = tile
+    }
+
+    clear() {
+        this.x = null
+        this.y = null
+        this.tile = null
+    }
+
+    draw(context) {
+        if (this.x != null && this.y != null && this.tile != null) {
+            //Border
+            context.fillStyle = this.borderColor
+            context.fillRect(this.x, this.y, this.width, this.height)
+
+            let borderX = this.x + this.borderWidth
+            let borderY = this.y + this.borderWidth
+            let innerX = this.width - (this.borderWidth * 2)
+            let innerY = this.height - (this.borderWidth * 2)
+
+            //Main screen
+            context.fillStyle = this.mainColor
+            context.fillRect(borderX, borderY, innerX, innerY)
+
+            //Text
+            let totalFontSize = this.fontSize + 2 + this.padding
+
+            context.font = this.font
+            context.fillStyle = this.textColor;
+            context.fillText(this.tile.display, borderX + this.padding, borderY + totalFontSize);
+            context.fillText(Math.floor(this.x / 32) + ', ' + Math.floor(this.y / 32), this.x + 20, this.y + 74);
+        }
+    }
+
+
 
 }

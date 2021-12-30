@@ -72,7 +72,7 @@ export class Canvas {
         for (let row = 0; row < this.map.length; row++){
             for (let col = 0; col < this.map[row].length; col++) {
                 let img = this.getImageFromId(this.map[row][col].id)
-                this.context.drawImage(img, row * tileSize, col * tileSize)
+                this.context.drawImage(img, col * tileSize, row * tileSize)
             }
         }
 
@@ -147,15 +147,7 @@ export class Canvas {
         //TODO - Move this to the text draw method
         this.context.font = FontSizes.header + 'px Arial'
 
-        let textLines = [
-            tileX + ', ' + tileY,
-            '',
-            'Type: ' + tile.display
-            //'Owner: ' + tile.owner
-        ]
-
-        //TODO - Once "getTileTextLines" is finished and the map has tiles assigned (x/y)
-        //let textLines = this.getTileTextLines(tile)
+        let textLines = this.getTileTextLines(tile)
 
         const maxWidth = this.getLargestTextWidth(textLines)
         const doubleBorder = borderWidth * 2
@@ -164,8 +156,12 @@ export class Canvas {
         let addedHeight
 
         for (let i in textLines) {
-            const textElement = new TextElement(x + doubleBorder, y + currentHeight, Color.white, FontSizes.header, textLines[i])
+            const textElement = new TextElement(x + doubleBorder, y + currentHeight, textLines[i])
             this.textToDraw.push(textElement)
+
+            //TODO - Have another for loop in text lines to see if there are multiple
+            //text's per line - add it below in findLargestWidth func to check
+            //for this as well
             addedHeight = textElement.fontSize + textElement.lineSpacing
             currentHeight += addedHeight
         }
@@ -181,23 +177,26 @@ export class Canvas {
     }
 
     getTileTextLines(tile) {
-        this.context.font = FontSizes.header + 'px Arial'
-
-        //TODO - Make each text line an object that holds:
-        //Text color, a bool to go to the newline, fontSize, 
-        //Add the text and find the largest width to know borders measurements
-        let text = [
-            tileX + ', ' + tileY,
-            '',
-            'Type: ' + tile.display
-            //'Owner: ' + tile.owner
+        return [
+            this.getTileObject(tile.x + ', ' + tile.y, FontSizes.normal, Color.white, true),
+            this.getTileObject('Type: ' + tile.display, FontSizes.normal, Color.white, true)
         ]
+    }
+
+    getTileObject(text, fontSize, color, newLine) {
+        return {
+            text: text,
+            fontSize: fontSize,
+            color: color,
+            newLine: newLine
+        }
     }
 
     getLargestTextWidth(list) {
         let maxWidth = 0
 
         for (let i in list) {
+            this.context.font = list[i].fontSize + 'px Arial'
             const width = this.context.measureText(list[i]).width
 
             if (width > maxWidth)
@@ -226,16 +225,20 @@ class RectElement {
 
 class TextElement {
 
-    constructor(x, y, color, fontSize, text) {
-        this.color = color
-        this.fontSize = fontSize
-        this.font = fontSize + 'px Arial'
+    constructor(x, y, textObj) {
+        this.color = textObj.color
+        this.fontSize = textObj.fontSize
+        this.font = textObj.fontSize + 'px Arial'
         
         this.x = x
-        this.y = y + fontSize
-        this.lineSpacing = 4
-
-        this.text = text
+        this.y = y + this.fontSize
+        
+        this.text = textObj.text
+        
+        if (textObj.newLine)
+            this.lineSpacing = 4
+        else
+            this.lineSpacing = 0
     }
 
     draw(context) {

@@ -22,17 +22,24 @@ class Map {
             return ((a.occurence > b.occurence) ? -1 : ((a.occurence == b.occurence) ? 0 : 1))
         })
 
+        let xCoord = -(this.rows - Math.floor(this.rows / 2))
+        
         for (let row = 0; row < this.rows; row++){
             let listRow = []
-
+            let yCoord = -(this.cols - Math.floor(this.cols / 2))
+            
             for (let col = 0; col < this.cols; col++) {
                 let tile = this.getRandomTile()
-                //TODO - Add x/y tile coordinate to each map tile
+                tile.x = xCoord
+                tile.y = yCoord
 
+                yCoord++
                 listRow.push(tile)
             }
+            xCoord++
             this.map.push(listRow)
         }
+
         this.saveMap()
         this.loadMap()
     }
@@ -79,7 +86,9 @@ class Map {
             totalChance += mapMetaData[tile].occurence
             
             if (rand <= totalChance) {
-                return mapMetaData[tile]
+                return {
+                    ...mapMetaData[tile]
+                }
             }    
         }
     }

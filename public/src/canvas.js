@@ -223,10 +223,12 @@ export class Canvas {
 
         for (let i in list) {
             this.context.font = list[i].fontSize + 'px Arial'
-            const width = this.context.measureText(list[i]).width
+            const width = this.context.measureText(list[i].text).width
 
-            if (width > maxWidth)
+            if (width > maxWidth) {
+                console.log(list[i])
                 maxWidth = width
+            }
         }
         return maxWidth
     }

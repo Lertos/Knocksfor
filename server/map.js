@@ -14,6 +14,9 @@ class Map {
 
         this.map = []
 
+        //How far in each direction from the players position should they see
+        this.chunkRange = 32
+
         this.createMap()
     }
 
@@ -40,8 +43,8 @@ class Map {
             this.map.push(listRow)
         }
 
-        this.saveMap()
-        this.loadMap()
+        //this.saveMap()
+        //this.loadMap()
     }
 
     saveMap() {
@@ -71,10 +74,19 @@ class Map {
         return mapMetaData
     }
 
-    //TODO - Given a x,y coordinate (being the center - where the player is to start),
-    //have a const above that says "tileRangeToLoad" which loads tiles in all directions by that amount
-    getMapChunk() {
+    //TODO - Need to check for edge cases so they dont go out of bounds. Simply return -1 and handle it in the server side
+    getMapChunk(rowIndex, colIndex) {
+        let chunk = []
+        
+        for (let row = rowIndex - this.chunkRange; row <= rowIndex + this.chunkRange; row++){
+            let chunkRow = []
 
+            for (let col = colIndex - this.chunkRange; col <= colIndex + this.chunkRange; col++) {
+                chunkRow.push(this.map[row][col])
+            }
+            chunk.push(chunkRow)
+        }
+        return chunk
     }
 
     //TODO - Add ownership, random start level, growth speed double

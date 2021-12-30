@@ -30,9 +30,15 @@ export class Canvas {
     elementsToDraw = []
     textToDraw = []
     
-    constructor(mapData, map) {
+    constructor(mapData, map, startX, startY) {
         this.mapData = mapData
         this.map = map
+
+        //TODO - This will come from the players current position
+        this.currentTile = {
+            x: startX,
+            y: startY
+        }
         
         this.createCanvas()
         this.canvas.addEventListener('mousedown', (e) => { this.getCursorPosition(e) })
@@ -89,6 +95,11 @@ export class Canvas {
         window.requestAnimationFrame(() => this.draw())
     }
 
+    clearDrawnElements() {
+        this.elementsToDraw = []
+        this.textToDraw = []
+    }
+
     getImageFromId(id) {
         for (let i = 0; i < this.images.length; i++) {
             if (id == this.images[i].id)
@@ -117,8 +128,7 @@ export class Canvas {
         if (elementIndex != -1) {
             console.log('Element index clicked: ' + elementIndex)
         } else {
-            this.elementsToDraw = []
-            this.textToDraw = []
+            this.clearDrawnElements()
             this.createMapPopup(x, y)
         }
     }
@@ -135,17 +145,22 @@ export class Canvas {
         return -1
     }
 
-    createMapPopup(x, y) {
-        //TODO - Will need to change this once the map is moveable as it won't be x/tileSize - it'll be currentTile.x
+    getClickedTile(x, y) {
         const tileX = Math.floor(x / tileSize)
         const tileY = Math.floor(y / tileSize)
-        const tile = this.map[tileX][tileY]   
-        
-        //TODO - Make each text line an object that holds:
-        //Text color, a bool to go to the newline, fontSize
-        
-        //TODO - Move this to the text draw method
-        this.context.font = FontSizes.header + 'px Arial'
+
+        //If clicked off the map
+        if (tileX > this.map.length || tileY > this.map[0].length)
+            return -1
+
+        return this.map[tileX][tileY]  
+    }
+
+    createMapPopup(x, y) {
+        const tile = this.getClickedTile(x, y)
+
+        if (tile == -1)
+            return
 
         let textLines = this.getTileTextLines(tile)
 

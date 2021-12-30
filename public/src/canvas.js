@@ -20,7 +20,6 @@ const FontSizes = {
 }
 
 let currentState = State.map
-let tileSize = 32
 let borderWidth = 4
 
 
@@ -33,6 +32,8 @@ export class Canvas {
     constructor(mapData, map, startX, startY) {
         this.mapData = mapData
         this.map = map
+
+        this.tileSize = 32
 
         //TODO - This will come from the players current position
         this.currentTile = {
@@ -78,7 +79,7 @@ export class Canvas {
         for (let row = 0; row < this.map.length; row++){
             for (let col = 0; col < this.map[row].length; col++) {
                 let img = this.getImageFromId(this.map[row][col].id)
-                this.context.drawImage(img, col * tileSize, row * tileSize)
+                this.context.drawImage(img, col * this.tileSize, row * this.tileSize)
             }
         }
 
@@ -146,14 +147,18 @@ export class Canvas {
     }
 
     getClickedTile(x, y) {
-        const tileX = Math.floor(x / tileSize)
-        const tileY = Math.floor(y / tileSize)
+        const tileX = Math.floor(x / this.tileSize)
+        const tileY = Math.floor(y / this.tileSize)
 
         //If clicked off the map
         if (tileX > this.map.length || tileY > this.map[0].length)
             return -1
 
-        return this.map[tileX][tileY]  
+        //If clicked on water tiles - show nothing
+        if (this.map[tileY][tileX].id == 'water')
+            return -1
+        
+        return this.map[tileY][tileX]  
     }
 
     createMapPopup(x, y) {
@@ -192,10 +197,16 @@ export class Canvas {
     }
 
     getTileTextLines(tile) {
-        return [
-            this.getTileObject(tile.x + ', ' + tile.y, FontSizes.normal, Color.white, true),
-            this.getTileObject('Type: ' + tile.display, FontSizes.normal, Color.white, true)
-        ]
+        let textLines = []
+        textLines.push(this.getTileObject(tile.x + ', ' + tile.y, FontSizes.normal, Color.white, true))
+        textLines.push(this.getTileObject('Type: ' + tile.display, FontSizes.normal, Color.white, true))
+        
+        if (tile.hasOwnProperty('level'))
+            textLines.push(this.getTileObject('Level: ' + tile.level, FontSizes.normal, Color.white, true))
+        if (tile.hasOwnProperty('owner'))
+            textLines.push(this.getTileObject('Owner: ' + tile.owner, FontSizes.normal, Color.red, true))
+
+        return textLines
     }
 
     getTileObject(text, fontSize, color, newLine) {

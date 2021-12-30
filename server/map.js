@@ -25,21 +25,16 @@ class Map {
             return ((a.occurence > b.occurence) ? -1 : ((a.occurence == b.occurence) ? 0 : 1))
         })
 
-        let xCoord = -(this.rows - Math.floor(this.rows / 2))
-        
         for (let row = 0; row < this.rows; row++){
             let listRow = []
-            let yCoord = -(this.cols - Math.floor(this.cols / 2))
             
             for (let col = 0; col < this.cols; col++) {
                 let tile = this.getRandomTile()
-                tile.x = xCoord
-                tile.y = yCoord
+                tile.x = row
+                tile.y = col
 
-                yCoord++
                 listRow.push(tile)
             }
-            xCoord++
             this.map.push(listRow)
         }
 
@@ -74,22 +69,25 @@ class Map {
         return mapMetaData
     }
 
-    //TODO - Need to check for edge cases so they dont go out of bounds. Simply return -1 and handle it in the server side
     getMapChunk(rowIndex, colIndex) {
         let chunk = []
-        
+
         for (let row = rowIndex - this.chunkRange; row <= rowIndex + this.chunkRange; row++){
             let chunkRow = []
 
             for (let col = colIndex - this.chunkRange; col <= colIndex + this.chunkRange; col++) {
-                chunkRow.push(this.map[row][col])
+                if (row < 0 || col < 0 || row >= this.map.length || col >= this.map[0].length) {
+                    chunkRow.push(this.getWaterTile())
+                }
+                else {
+                    chunkRow.push(this.map[row][col])
+                }
             }
             chunk.push(chunkRow)
         }
         return chunk
     }
 
-    //TODO - Add ownership, random start level, growth speed double
     getRandomTile() {
         let rand = Math.random()
         let totalChance = 0
@@ -98,10 +96,25 @@ class Map {
             totalChance += mapMetaData[tile].occurence
             
             if (rand <= totalChance) {
-                return {
-                    ...mapMetaData[tile]
-                }
+                let newTile = { ...mapMetaData[tile] }
+                
+                if (newTile.ownable)
+                    newTile.owner = 'Lertos'
+                
+                newTile.level = Math.floor(Math.random() * 10) + 1
+                
+                return newTile
             }    
+        }
+    }
+
+    getWaterTile() {
+        for (let i in mapMetaData) {
+            if (mapMetaData[i].id == 'water') {
+                return {
+                    ...mapMetaData[i]
+                }
+            }
         }
     }
 
@@ -109,10 +122,17 @@ class Map {
 
 const mapMetaData = [
     {
+        id: 'water',
+        display: 'Water',
+        file: 'water.png',
+        ownable: false,
+        occurence: 0
+    },
+    {
         id: 'grass',
         display: 'Grass',
         file: 'grass.png',
-        ownable: true,
+        ownable: false,
         occurence: 0.87
     },
     {

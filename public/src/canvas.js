@@ -3,6 +3,7 @@ const Color = {
     white: '#ffffff',
     red: '#d60000',
     blue: '#4275cf',
+    yellow: '#e8eb34',
     darkBrown: '#383131',
     lightBrown: '#4a4343',
 }
@@ -16,11 +17,13 @@ const State = {
 const FontSizes = {
     header: 24,
     title: 20,
-    normal: 16
+    normal: 16,
+    small: 12
 }
 
 let currentState = State.map
 let borderWidth = 4
+let lineSpacing = 6
 
 
 export class Canvas {
@@ -183,57 +186,97 @@ export class Canvas {
     }
 
     createTextElements(textLines, padding, startX, startY) {
-        let currentX = startX + padding
-        let currentY = startY + padding
+        const lineHeights = this.getEachLineHeight(textLines)
         let totalheight = padding
-        let fontSpacing
 
+        let lineXPos = startX + padding
+        let lineYPos = startY + padding
+        
         let newLine = false
 
         for (let i in textLines) {
-
             if (newLine) {
-                currentX = startX + padding
-                currentY += fontSpacing
-                totalheight += fontSpacing
-            }
+                totalheight += lineHeights[i]
 
-            const textElement = new TextElement(currentX, currentY, textLines[i])
+                lineXPos = startX + padding
+                lineYPos += lineHeights[i-1]
+            }
+            const textElement = new TextElement(lineXPos, lineYPos, textLines[i])
             this.textToDraw.push(textElement)
 
-            //Save this for the next iteration
-            fontSpacing = textElement.fontSize + textElement.lineSpacing
-
-            if (!textLines[i].newLine) {
-                currentX += textElement.getWidth(this.context)
+            if (!textLines[i].newLineAfter) { 
+                lineXPos += textElement.getWidth(this.context)
                 newLine = false
             } else {
                 newLine = true
             }
         }
 
-        return totalheight + fontSpacing * 2
+        const finalLinePadding = lineHeights[lineHeights.length-1] + padding * 2
+        return totalheight + finalLinePadding
+    }
+
+    getEachLineHeight(list) {
+        let heights = []
+
+        let maxHeight = 0
+        let stopAtIndex = -1
+        
+        for (let i in list) {
+            //If the current iteration should just use the maxHeight as it's the same line
+            if (stopAtIndex != -1 && i <= stopAtIndex) {
+                if (i == stopAtIndex)
+                    stopAtIndex = -1
+            
+                heights[i] = maxHeight + lineSpacing
+                continue
+            }
+
+            //If the current iteration isn't the final text in this entire line - find the maxHeight
+            if (!list[i].newLineAfter) {
+                maxHeight = list[i].fontSize
+                stopAtIndex = i
+
+                for (let j = i; j < list.length; j++) {
+                    if (list[j].fontSize > maxHeight)
+                        maxHeight = list[j].fontSize
+                        
+                    if (list[j].newLineAfter) {
+                        stopAtIndex = j
+                        break
+                    }
+                }
+            }
+            //If the current text is by itself simply add the height
+            heights[i] = list[i].fontSize + lineSpacing
+        }
+        return heights
     }
 
     getTileTextLines(tile) {
         let textLines = []
-        textLines.push(this.getTileObject(tile.x + ', ' + tile.y, FontSizes.normal, Color.white, false))
-        textLines.push(this.getTileObject('Type: ' + tile.display, FontSizes.normal, Color.white, true))
+        textLines.push(this.getTileObject('( ' + tile.x + ', ' + tile.y + ' )', FontSizes.small, Color.white, true))
+        textLines.push(this.getTileObject('Type:', FontSizes.normal, Color.white, false))
+        textLines.push(this.getTileObject(tile.display, FontSizes.normal, Color.yellow, true))
         
-        if (tile.hasOwnProperty('level'))
-            textLines.push(this.getTileObject('Level: ' + tile.level, FontSizes.normal, Color.white, true))
-        if (tile.hasOwnProperty('owner'))
-            textLines.push(this.getTileObject('Owner: ' + tile.owner, FontSizes.normal, Color.red, true))
+        if (tile.hasOwnProperty('level')) {
+            textLines.push(this.getTileObject('Level:', FontSizes.normal, Color.white, false))
+            textLines.push(this.getTileObject(tile.level, FontSizes.normal, Color.yellow, true))
+        }
+        if (tile.hasOwnProperty('owner')) {
+            textLines.push(this.getTileObject('Owner:', FontSizes.normal, Color.white, false))
+            textLines.push(this.getTileObject(tile.owner, FontSizes.normal, Color.red, true))
+        }
 
         return textLines
     }
 
-    getTileObject(text, fontSize, color, newLine) {
+    getTileObject(text, fontSize, color, newLineAfter) {
         return {
             text: text,
             fontSize: fontSize,
             color: color,
-            newLine: newLine
+            newLineAfter: newLineAfter
         }
     }
 
@@ -249,13 +292,12 @@ export class Canvas {
                 lineWidth = 0
 
             this.context.font = list[i].fontSize + 'px Arial'
-            const width = this.context.measureText(list[i].text).width
-            lineWidth += width
+            lineWidth += this.context.measureText(list[i].text).width
 
             if (lineWidth > maxWidth)
                 maxWidth = lineWidth
 
-            if (!list[i].newLine) {
+            if (!list[i].newLineAfter) {
                 lineWidth += this.context.measureText(' ').width
                 newLine = false
             }
@@ -294,13 +336,12 @@ class TextElement {
         this.y = y + this.fontSize
         
         this.text = textObj.text
-        this.lineSpacing = 4
     }
 
     draw(context) {
         context.font = this.font
         context.fillStyle = this.color
-        context.fillText(this.text, this.x, this.y + this.lineSpacing)
+        context.fillText(this.text, this.x, this.y + lineSpacing)
     }
 
     getWidth(context) {

@@ -237,17 +237,30 @@ export class Canvas {
         }
     }
 
-    //TODO - Check for newline and add width if so
     getLargestTextWidth(list) {
         let maxWidth = 0
+        let lineWidth = 0
+
+        let newLine = false
 
         for (let i in list) {
+
+            if (newLine)
+                lineWidth = 0
+
             this.context.font = list[i].fontSize + 'px Arial'
             const width = this.context.measureText(list[i].text).width
+            lineWidth += width
 
-            if (width > maxWidth) {
-                maxWidth = width
+            if (lineWidth > maxWidth)
+                maxWidth = lineWidth
+
+            if (!list[i].newLine) {
+                lineWidth += this.context.measureText(' ').width
+                newLine = false
             }
+            else
+                newLine = true
         }
         return maxWidth
     }

@@ -170,35 +170,54 @@ export class Canvas {
         let textLines = this.getTileTextLines(tile)
 
         const maxWidth = this.getLargestTextWidth(textLines)
-        const doubleBorder = borderWidth * 2
+        const padding = borderWidth * 2
 
-        let currentHeight = doubleBorder
-        let addedHeight
+        const finalHeight = this.createTextElements(textLines, padding, x, y)
 
-        for (let i in textLines) {
-            const textElement = new TextElement(x + doubleBorder, y + currentHeight, textLines[i])
-            this.textToDraw.push(textElement)
-
-            //TODO - Have another for loop in text lines to see if there are multiple
-            //text's per line - add it below in findLargestWidth func to check
-            //for this as well
-            addedHeight = textElement.fontSize + textElement.lineSpacing
-            currentHeight += addedHeight
-        }
-        //To add the needed space below the final text element since it calculates from the top of the text
-        currentHeight += addedHeight
-
-        //Create the bounding rectangle around the text
-        let outerRect = new RectElement(x, y, maxWidth + (borderWidth * 4), currentHeight, Color.lightBrown)
-        let innerRect = new RectElement(x + borderWidth, y + borderWidth, outerRect.width - doubleBorder, outerRect.height - doubleBorder, Color.darkBrown)
+        //Create the bounding rectangle around the text (the popup)
+        let outerRect = new RectElement(x, y, maxWidth + (borderWidth * 4), finalHeight, Color.lightBrown)
+        let innerRect = new RectElement(x + borderWidth, y + borderWidth, outerRect.width - padding, outerRect.height - padding, Color.darkBrown)
 
         this.elementsToDraw.push(outerRect)
         this.elementsToDraw.push(innerRect)
     }
 
+    createTextElements(textLines, padding, startX, startY) {
+        let currentX = startX + padding
+        let currentY = startY + padding
+        let totalheight = padding
+        let fontSpacing
+
+        let newLine = false
+
+        for (let i in textLines) {
+
+            if (newLine) {
+                currentX = startX + padding
+                currentY += fontSpacing
+                totalheight += fontSpacing
+            }
+
+            const textElement = new TextElement(currentX, currentY, textLines[i])
+            this.textToDraw.push(textElement)
+
+            //Save this for the next iteration
+            fontSpacing = textElement.fontSize + textElement.lineSpacing
+
+            if (!textLines[i].newLine) {
+                currentX += textElement.getWidth(this.context)
+                newLine = false
+            } else {
+                newLine = true
+            }
+        }
+
+        return totalheight + fontSpacing * 2
+    }
+
     getTileTextLines(tile) {
         let textLines = []
-        textLines.push(this.getTileObject(tile.x + ', ' + tile.y, FontSizes.normal, Color.white, true))
+        textLines.push(this.getTileObject(tile.x + ', ' + tile.y, FontSizes.normal, Color.white, false))
         textLines.push(this.getTileObject('Type: ' + tile.display, FontSizes.normal, Color.white, true))
         
         if (tile.hasOwnProperty('level'))
@@ -218,6 +237,7 @@ export class Canvas {
         }
     }
 
+    //TODO - Check for newline and add width if so
     getLargestTextWidth(list) {
         let maxWidth = 0
 
@@ -226,7 +246,6 @@ export class Canvas {
             const width = this.context.measureText(list[i].text).width
 
             if (width > maxWidth) {
-                console.log(list[i])
                 maxWidth = width
             }
         }
@@ -262,17 +281,23 @@ class TextElement {
         this.y = y + this.fontSize
         
         this.text = textObj.text
-        
-        if (textObj.newLine)
-            this.lineSpacing = 4
-        else
-            this.lineSpacing = 0
+        this.lineSpacing = 4
     }
 
     draw(context) {
         context.font = this.font
         context.fillStyle = this.color
         context.fillText(this.text, this.x, this.y + this.lineSpacing)
+    }
+
+    getWidth(context) {
+        context.font = this.font
+        return context.measureText(this.text).width + this.getSpaceWidth(context)
+    }
+
+    getSpaceWidth(context) {
+        context.font = this.font
+        return context.measureText(' ').width
     }
 
 }

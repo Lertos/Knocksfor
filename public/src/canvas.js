@@ -21,6 +21,12 @@ const FontSizes = {
     small: 12
 }
 
+const FontAlign = {
+    center: 'center',
+    left: 'left',
+    right: 'right'
+}
+
 let currentState = State.map
 let borderWidth = 4
 let lineSpacing = 6
@@ -175,7 +181,7 @@ export class Canvas {
         const maxWidth = this.getLargestTextWidth(textLines)
         const padding = borderWidth * 2
 
-        const finalHeight = this.createTextElements(textLines, padding, x, y)
+        const finalHeight = this.createTextElements(textLines, padding, x, y, maxWidth)
 
         //Create the bounding rectangle around the text (the popup)
         let outerRect = new RectElement(x, y, maxWidth + (borderWidth * 4), finalHeight, Color.lightBrown)
@@ -185,27 +191,33 @@ export class Canvas {
         this.elementsToDraw.push(innerRect)
     }
 
-    createTextElements(textLines, padding, startX, startY) {
+    createTextElements(textLines, padding, startX, startY, maxLineWidth) {
         const lineHeights = this.getEachLineHeight(textLines)
         let totalheight = padding
 
         let lineXPos = startX + padding
         let lineYPos = startY + padding
+
+        let currentLineX = 0
         
         let newLine = false
 
         for (let i in textLines) {
             if (newLine) {
                 totalheight += lineHeights[i]
+                currentLineX = 0
 
-                lineXPos = startX + padding
+                lineXPos = startX
                 lineYPos += lineHeights[i-1]
             }
-            const textElement = new TextElement(lineXPos, lineYPos, textLines[i])
+            const xOffset = this.getXOffsetOfLine(textLines[i], currentLineX, maxLineWidth)
+            
+            const textElement = new TextElement(lineXPos + xOffset + padding, lineYPos, textLines[i])
             this.textToDraw.push(textElement)
 
             if (!textLines[i].newLineAfter) { 
                 lineXPos += textElement.getWidth(this.context)
+                currentLineX = textElement.getWidth(this.context)
                 newLine = false
             } else {
                 newLine = true
@@ -214,6 +226,23 @@ export class Canvas {
 
         const finalLinePadding = lineHeights[lineHeights.length-1] + padding * 2
         return totalheight + finalLinePadding
+    }
+
+    getXOffsetOfLine(line, currentX, maxLineWidth) {
+        if (line.alignment == FontAlign.left)
+            return 0
+        
+        if (line.alignment == FontAlign.center) {
+            const remainingWidth = maxLineWidth - currentX
+            const difference = Math.floor(remainingWidth / 2) - Math.floor(this.context.measureText(line.text).width / 2)
+            return difference
+        }
+        //TODO - Align right
+    }
+
+
+    getLineWidthLeft() {
+
     }
 
     getEachLineHeight(list) {
@@ -255,28 +284,29 @@ export class Canvas {
 
     getTileTextLines(tile) {
         let textLines = []
-        textLines.push(this.getTileObject('( ' + tile.x + ', ' + tile.y + ' )', FontSizes.small, Color.white, true))
-        textLines.push(this.getTileObject('Type:', FontSizes.normal, Color.white, false))
-        textLines.push(this.getTileObject(tile.display, FontSizes.normal, Color.yellow, true))
+        textLines.push(this.getTileObject('( ' + tile.x + ', ' + tile.y + ' )', FontSizes.small, Color.white, true, FontAlign.center))
+        textLines.push(this.getTileObject('Type:', FontSizes.normal, Color.white, false, FontAlign.left))
+        textLines.push(this.getTileObject(tile.display, FontSizes.normal, Color.yellow, true, FontAlign.left))
         
         if (tile.hasOwnProperty('level')) {
-            textLines.push(this.getTileObject('Level:', FontSizes.normal, Color.white, false))
-            textLines.push(this.getTileObject(tile.level, FontSizes.normal, Color.yellow, true))
+            textLines.push(this.getTileObject('Level:', FontSizes.normal, Color.white, false, FontAlign.left))
+            textLines.push(this.getTileObject(tile.level, FontSizes.normal, Color.yellow, true, FontAlign.left))
         }
         if (tile.hasOwnProperty('owner')) {
-            textLines.push(this.getTileObject('Owner:', FontSizes.normal, Color.white, false))
-            textLines.push(this.getTileObject(tile.owner, FontSizes.normal, Color.red, true))
+            textLines.push(this.getTileObject('Owner:', FontSizes.normal, Color.white, false, FontAlign.left))
+            textLines.push(this.getTileObject(tile.owner, FontSizes.normal, Color.red, true, FontAlign.left))
         }
 
         return textLines
     }
 
-    getTileObject(text, fontSize, color, newLineAfter) {
+    getTileObject(text, fontSize, color, newLineAfter, alignment) {
         return {
             text: text,
             fontSize: fontSize,
             color: color,
-            newLineAfter: newLineAfter
+            newLineAfter: newLineAfter,
+            alignment: alignment
         }
     }
 

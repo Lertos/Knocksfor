@@ -211,7 +211,7 @@ export class Canvas {
                 lineYPos += lineHeights[i-1]
             }
             const xOffset = this.getXOffsetOfLine(textLines[i], currentLineX, maxLineWidth)
-            
+
             const textElement = new TextElement(lineXPos + xOffset + padding, lineYPos, textLines[i])
             this.textToDraw.push(textElement)
 
@@ -234,15 +234,10 @@ export class Canvas {
         
         if (line.alignment == FontAlign.center) {
             const remainingWidth = maxLineWidth - currentX
-            const difference = Math.floor(remainingWidth / 2) - Math.floor(this.context.measureText(line.text).width / 2)
+            const difference = Math.floor((remainingWidth - this.context.measureText(line.text).width) / 2)
             return difference
         }
         //TODO - Align right
-    }
-
-
-    getLineWidthLeft() {
-
     }
 
     getEachLineHeight(list) {

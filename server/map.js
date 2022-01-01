@@ -5,9 +5,6 @@ const mapFileName = './game_data/map.json'
 
 class Map {
 
-    //TODO - Might want to either change this so rows and cols aren't passed
-    ///and instead are variables above - or leave it and only generate a new map
-    //when there is no data in the save file
     constructor(rows, cols) {
         this.rows = rows
         this.cols = cols
@@ -17,7 +14,20 @@ class Map {
         //How far in each direction from the players position should they see
         this.chunkRange = 32
 
-        this.createMap()
+        this.loadMap()
+    }
+
+    loadMap() {
+        try {
+            let rawData = fs.readFileSync(mapFileName)
+            let parsed = JSON.parse(rawData)
+
+            this.map = parsed
+        } catch (err) {
+            //File does not exist
+            if (err.code == 'ENOENT')
+                this.createMap()
+        }
     }
 
     createMap() {
@@ -38,24 +48,12 @@ class Map {
             this.map.push(listRow)
         }
 
-        //this.saveMap()
-        //this.loadMap()
+        this.saveMapSync()
     }
 
-    saveMap() {
+    saveMapSync() {
         try {
             fs.writeFileSync(mapFileName, JSON.stringify(this.map))
-        } catch (err) {
-            console.error(err)
-        }
-    }
-
-    loadMap() {
-        try {
-            let rawData = fs.readFileSync(mapFileName)
-            let parsed = JSON.parse(rawData)
-
-            this.map = parsed
         } catch (err) {
             console.error(err)
         }

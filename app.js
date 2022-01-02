@@ -1,3 +1,5 @@
+require('dotenv/config')
+
 const express = require('express')
 const http = require('http')
 const socketio = require('socket.io')
@@ -44,8 +46,8 @@ app.get('/', (req, res) => {
     })
 })
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT
 
 server.listen(PORT, () => {
-    console.log('Server is up and running!')
+    console.log('Server is up and running on port: ' + PORT)
 })

@@ -29,13 +29,13 @@ io.on('connection', (socket) => {
     console.log('New socket connection')
 
     map = gameMap.getMapChunk(startPosition.x, startPosition.y)
-    socket.emit('server::setupMap', { mapData: mapData, map: map, x: startPosition.x, y: startPosition.y })
+    socket.emit('server:setupMap', { mapData: mapData, map: map, x: startPosition.x, y: startPosition.y })
 
     //TODO - This should be instead grabbed by the players current row/col in their
     //player class - but for now it shall be hardcoded to 0,0
-    socket.on('player::getMap', (data) => {
+    socket.on('player:getMap', (data) => {
         map = gameMap.getMapChunk(data.x, data.y)
-        socket.emit('server::updateMap', { map: map, x: data.x, y: data.y })
+        socket.emit('server:updateMap', { map: map, x: data.x, y: data.y })
     })
 
 })
